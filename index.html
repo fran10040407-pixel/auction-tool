@@ -80,6 +80,12 @@
     </div>
 
     <script>
+        // 카카오톡 인앱 브라우저 감지 및 외부 브라우저(크롬 등) 자동 연결 기능
+        var userAgent = navigator.userAgent.toLowerCase();
+        if (userAgent.indexOf("kakaotalk") > -1) {
+            location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href);
+        }
+
         function openYahoo(keyword) {
             const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(keyword)}&s1=end&o1=a`;
             window.open(url, '_blank');
