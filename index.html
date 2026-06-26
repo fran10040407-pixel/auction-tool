@@ -90,21 +90,18 @@
     </div>
 
     <script>
-        // 카카오톡 인앱 브라우저 감지 및 외부 브라우저(크롬 등) 자동 연결 기능
         var userAgent = navigator.userAgent.toLowerCase();
         if (userAgent.indexOf("kakaotalk") > -1) {
             location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href);
         }
 
         function openYahoo(keyword) {
-            // 주류 카테고리(auccat=2084043920) 강제 지정 추가
-            const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(keyword)}&s1=end&o1=a&auccat=2084043920`;
+            const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(keyword)}&s1=end&o1=a&auccat=2084006720`;
             window.open(url, '_blank');
         }
         
         function openClosedYahoo(keyword) {
-            // 주류 카테고리(auccat=2084043920) 강제 지정 추가
-            const url = `https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=${encodeURIComponent(keyword)}&auccat=2084043920`;
+            const url = `https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=${encodeURIComponent(keyword)}&auccat=2084006720`;
             window.open(url, '_blank');
         }
         
@@ -118,7 +115,7 @@
             let input = document.getElementById('koreanKeyword').value.trim();
             if (!input) { alert("검색어를 입력하세요."); return; }
             let jpKeyword = dic[input] ? dic[input] : input; 
-            const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(jpKeyword)}&s1=end&o1=a&auccat=2084043920`;
+            const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(jpKeyword)}&s1=end&o1=a&auccat=2084006720`;
             window.open(url, '_blank');
         }
         
