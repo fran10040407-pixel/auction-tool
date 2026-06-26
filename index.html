@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>일본 옥션 검색 및 계산 도구</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; background-color: #f9f9f9; }
+        .container { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2, h3 { color: #333; border-bottom: 2px solid #ddd; padding-bottom: 10px; font-size: 1.2em; }
+        .item-row { margin-bottom: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+        .item-name { width: 120px; font-weight: bold; }
+        button { padding: 8px 12px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; }
+        .search-btn { background-color: #ffe600; }
+        .price-btn { background-color: #e0e0e0; }
+        input[type="text"], input[type="number"], select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; max-width: 150px; }
+        .calc-row { margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap;}
+        .calc-row label { display: inline-block; width: 140px; }
+        #totalResult { font-size: 1.2em; color: #d32f2f; font-weight: bold; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>1. 주류 옥션 빠른 검색</h2>
+        <div class="item-row">
+            <span class="item-name">조니워커 금뚜</span>
+            <button class="search-btn" onclick="openYahoo('ジョニーウォーカー 金キャップ')">옥션 검색</button>
+            <button class="price-btn" onclick="openClosedYahoo('ジョニーウォーカー 金キャップ')">시세 조회</button>
+        </div>
+        <div class="item-row">
+            <span class="item-name">조니워커 반금뚜</span>
+            <button class="search-btn" onclick="openYahoo('ジョニーウォーカー 黒金キャップ')">옥션 검색</button>
+            <button class="price-btn" onclick="openClosedYahoo('ジョニーウォーカー 黒金キャップ')">시세 조회</button>
+        </div>
+        <div class="item-row">
+            <span class="item-name">발렌타인</span>
+            <button class="search-btn" onclick="openYahoo('バランタイン')">옥션 검색</button>
+            <button class="price-btn" onclick="openClosedYahoo('バランタイン')">시세 조회</button>
+        </div>
+        <div class="item-row">
+            <span class="item-name">캬뮤 미니북</span>
+            <button class="search-btn" onclick="openYahoo('カミュ ミニブック')">옥션 검색</button>
+            <button class="price-btn" onclick="openClosedYahoo('カミュ ミニブック')">시세 조회</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>2. 한글 -> 일본어 자동 변환 검색</h2>
+        <input type="text" id="koreanKeyword" placeholder="예: 야마자키">
+        <button class="search-btn" onclick="searchCustom()" style="margin-top:5px;">변환 후 검색</button>
+    </div>
+
+    <div class="container">
+        <h2>3. 예상 총비용 계산기 (주류 기준)</h2>
+        <div class="calc-row">
+            <label>낙찰 예상가 (엔):</label>
+            <input type="number" id="bidPrice" value="10000"> 엔
+        </div>
+        <div class="calc-row">
+            <label>현재 환율 (100엔당):</label>
+            <input type="number" id="exchangeRate" value="900"> 원
+        </div>
+        <div class="calc-row">
+            <label>현지+국제 배송 (엔):</label>
+            <input type="number" id="shippingFee" value="3000"> 엔
+        </div>
+        <div class="calc-row">
+            <label>예상 세금 (관세 등):</label>
+            <select id="taxRate">
+                <option value="1.55">위스키 (약 155%)</option>
+                <option value="1.46">꼬냑/브랜디 (약 146%)</option>
+                <option value="1.68">사케/와인 (약 68%)</option>
+                <option value="1.0">세금 면제 (기본)</option>
+            </select>
+        </div>
+        <button class="search-btn" onclick="calculateTotal()" style="margin-top:10px;">총 예상비용 계산</button>
+        <div id="totalResult">총 예상 비용: </div>
+        <p style="font-size: 0.85em; color: #666; margin-top: 10px;">※ 주류 2리터 이하, 150달러 이하 면세 한도 초과 시를 가정한 대략적인 세금입니다.</p>
+    </div>
+
+    <script>
+        function openYahoo(keyword) {
+            const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(keyword)}&s1=end&o1=a`;
+            window.open(url, '_blank');
+        }
+        function openClosedYahoo(keyword) {
+            const url = `https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=${encodeURIComponent(keyword)}`;
+            window.open(url, '_blank');
+        }
+        const dic = {
+            "야마자키": "山崎", "히비키": "響", "하쿠슈": "白州", "맥캘란": "マッカラン",
+            "헤네시": "ヘネシー", "레미마틴": "レミーマルタン", "글렌피딕": "グレンフィディック",
+            "사케": "日本酒", "와인": "ワイン", "닷사이": "獺祭", "쥬욘다이": "十四代", "돔페리뇽": "ドンペリニヨン"
+        };
+        function searchCustom() {
+            let input = document.getElementById('koreanKeyword').value.trim();
+            if (!input) { alert("검색어를 입력하세요."); return; }
+            let jpKeyword = dic[input] ? dic[input] : input; 
+            const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(jpKeyword)}&s1=end&o1=a&auccat=2084043920`;
+            window.open(url, '_blank');
+        }
+        function calculateTotal() {
+            const bid = parseFloat(document.getElementById('bidPrice').value) || 0;
+            const rate = parseFloat(document.getElementById('exchangeRate').value) / 100 || 0;
+            const shipping = parseFloat(document.getElementById('shippingFee').value) || 0;
+            const taxMultiplier = parseFloat(document.getElementById('taxRate').value) || 1;
+
+            const totalJpy = bid + shipping;
+            const totalKrw = totalJpy * rate;
+            
+            let taxAmountKrw = 0;
+            if (taxMultiplier > 1.0) {
+                taxAmountKrw = (bid * rate) * (taxMultiplier - 1); 
+            }
+            const finalKrw = totalKrw + taxAmountKrw;
+            
+            document.getElementById('totalResult').innerText = 
+                `총 예상 비용: 약 ${Math.round(finalKrw).toLocaleString()} 원 ` + 
+                `(상품+배송: ${Math.round(totalKrw).toLocaleString()}원 / 세금: ${Math.round(taxAmountKrw).toLocaleString()}원)`;
+        }
+    </script>
+</body>
+</html>
