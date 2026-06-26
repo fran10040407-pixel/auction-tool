@@ -24,6 +24,21 @@
     <div class="container">
         <h2>1. 주류 옥션 빠른 검색</h2>
         <div class="item-row">
+            <span class="item-name">맥캘란</span>
+            <button class="search-btn" onclick="openYahoo('マッカラン')">옥션 검색</button>
+            <button class="price-btn" onclick="openClosedYahoo('マッカラン')">시세 조회</button>
+        </div>
+        <div class="item-row">
+            <span class="item-name">발렌타인</span>
+            <button class="search-btn" onclick="openYahoo('バランタイン')">옥션 검색</button>
+            <button class="price-btn" onclick="openClosedYahoo('バランタイン')">시세 조회</button>
+        </div>
+        <div class="item-row">
+            <span class="item-name">스프링뱅크</span>
+            <button class="search-btn" onclick="openYahoo('スプリングバンク')">옥션 검색</button>
+            <button class="price-btn" onclick="openClosedYahoo('スプリングバンク')">시세 조회</button>
+        </div>
+        <div class="item-row">
             <span class="item-name">조니워커 금뚜</span>
             <button class="search-btn" onclick="openYahoo('ジョニーウォーカー 金キャップ')">옥션 검색</button>
             <button class="price-btn" onclick="openClosedYahoo('ジョニーウォーカー 金キャップ')">시세 조회</button>
@@ -32,11 +47,6 @@
             <span class="item-name">조니워커 반금뚜</span>
             <button class="search-btn" onclick="openYahoo('ジョニーウォーカー 黒金キャップ')">옥션 검색</button>
             <button class="price-btn" onclick="openClosedYahoo('ジョニーウォーカー 黒金キャップ')">시세 조회</button>
-        </div>
-        <div class="item-row">
-            <span class="item-name">발렌타인</span>
-            <button class="search-btn" onclick="openYahoo('バランタイン')">옥션 검색</button>
-            <button class="price-btn" onclick="openClosedYahoo('バランタイン')">시세 조회</button>
         </div>
         <div class="item-row">
             <span class="item-name">캬뮤 미니북</span>
@@ -87,18 +97,23 @@
         }
 
         function openYahoo(keyword) {
-            const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(keyword)}&s1=end&o1=a`;
+            // 주류 카테고리(auccat=2084043920) 강제 지정 추가
+            const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(keyword)}&s1=end&o1=a&auccat=2084043920`;
             window.open(url, '_blank');
         }
+        
         function openClosedYahoo(keyword) {
-            const url = `https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=${encodeURIComponent(keyword)}`;
+            // 주류 카테고리(auccat=2084043920) 강제 지정 추가
+            const url = `https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=${encodeURIComponent(keyword)}&auccat=2084043920`;
             window.open(url, '_blank');
         }
+        
         const dic = {
-            "야마자키": "山崎", "히비키": "響", "하쿠슈": "白州", "맥캘란": "マッカラン",
+            "야마자키": "山崎", "히비키": "響", "하쿠슈": "白州", "맥캘란": "マッカラン", "스프링뱅크": "スプリングバンク",
             "헤네시": "ヘネシー", "레미마틴": "レミーマルタン", "글렌피딕": "グレンフィディック",
             "사케": "日本酒", "와인": "ワイン", "닷사이": "獺祭", "쥬욘다이": "十四代", "돔페리뇽": "ドンペリニヨン"
         };
+        
         function searchCustom() {
             let input = document.getElementById('koreanKeyword').value.trim();
             if (!input) { alert("검색어를 입력하세요."); return; }
@@ -106,6 +121,7 @@
             const url = `https://auctions.yahoo.co.jp/search/search?p=${encodeURIComponent(jpKeyword)}&s1=end&o1=a&auccat=2084043920`;
             window.open(url, '_blank');
         }
+        
         function calculateTotal() {
             const bid = parseFloat(document.getElementById('bidPrice').value) || 0;
             const rate = parseFloat(document.getElementById('exchangeRate').value) / 100 || 0;
