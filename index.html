@@ -56,13 +56,33 @@
     </div>
 
     <div class="container">
-        <h2>2. 한글 -> 일본어 자동 변환 검색</h2>
+        <h2>2. 인기 주류 판매자 바로가기</h2>
+        <div class="item-row">
+            <span class="item-name">가스</span>
+            <button class="search-btn" onclick="window.open('https://auctions.yahoo.co.jp/seller/2QBqrSWBpztNbueEsP84NqeJwQPyb', '_blank')">판매자 보기</button>
+        </div>
+        <div class="item-row">
+            <span class="item-name">사케</span>
+            <button class="search-btn" onclick="window.open('https://auctions.yahoo.co.jp/seller/Byc6VqiSUc4XGupSvRudkfQSxxSHb', '_blank')">판매자 보기</button>
+        </div>
+        <div class="item-row">
+            <span class="item-name">자오</span>
+            <button class="search-btn" onclick="window.open('https://auctions.yahoo.co.jp/seller/9Tcw4zTn9fWDQtZfsXfdrwyavNuKA', '_blank')">판매자 보기</button>
+        </div>
+        <div class="item-row">
+            <span class="item-name">조이</span>
+            <button class="search-btn" onclick="window.open('https://auctions.yahoo.co.jp/seller/ex52Sva44S6Wuj9yB4CLudswCEHx', '_blank')">판매자 보기</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>3. 한글 -> 일본어 자동 변환 검색</h2>
         <input type="text" id="koreanKeyword" placeholder="예: 야마자키">
         <button class="search-btn" onclick="searchCustom()" style="margin-top:5px;">변환 후 검색</button>
     </div>
 
     <div class="container">
-        <h2>3. 예상 총비용 계산기 (주류 기준)</h2>
+        <h2>4. 예상 총비용 계산기 (주류 기준)</h2>
         <div class="calc-row">
             <label>낙찰 예상가 (엔):</label>
             <input type="number" id="bidPrice" value="10000"> 엔
@@ -108,7 +128,7 @@
         const dic = {
             "야마자키": "山崎", "히비키": "響", "하쿠슈": "白州", "맥캘란": "マッカラン", "스프링뱅크": "スプリングバンク",
             "헤네시": "ヘネシー", "레미마틴": "レミーマルタン", "글렌피딕": "グレンフィディック",
-            "사케": "日本酒", "와인": "ワイン", "닷사이": "獺祭", "쥬욘다이": "十四代", "돔페리뇽": "ドンペリニヨン"
+            "사케": "日本酒", "와인": "ワイン", "닷사이": "獺祭", "쥬ヨン다이": "十四代", "돔페리뇽": "ドンペリニヨン"
         };
         
         function searchCustom() {
