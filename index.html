@@ -17,6 +17,7 @@
         .calc-row { margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap;}
         .calc-row label { display: inline-block; width: 140px; }
         #totalResult { font-size: 1.2em; color: #d32f2f; font-weight: bold; margin-top: 15px; }
+        #statusMsg { margin-top: 10px; font-size: 0.9em; font-weight: bold; min-height: 20px; }
     </style>
 </head>
 <body>
@@ -79,6 +80,7 @@
         <h2>3. 100% 리얼 실시간 자동 번역 검색</h2>
         <input type="text" id="koreanKeyword" placeholder="아무 한글이나 입력하세요">
         <button class="search-btn" onclick="searchCustom()" style="margin-top:5px;">번역 후 야후 검색</button>
+        <div id="statusMsg"></div>
     </div>
 
     <div class="container">
@@ -132,28 +134,47 @@
             "발렌타인": "バランタイン", "조니워커": "ジョニーウォーカー", "로얄살루트": "ロイヤルサルート", "시바스리갈": "シーバスリーガル", "올드파": "オールドパー", "듀어스": "デュワーズ", "커티삭": "カティサーク", "딤플": "ディンプル",
             "제임슨": "ジェムソン", "부쉬밀": "ブッシュミルズ", "레드브레스트": "レッドブレスト",
             "와일드터키": "ワイルドターキー", "버팔로트레이스": "バッファロートレース", "메이커스마크": "メーカーズマーク", "우드포드리저브": "ウッドフォードリザーブ", "잭다니엘": "ジャックダニエル",
-            "헤네시": "ヘネシー", "레미마틴": "レミーマルタン", "카뮤": "カミュ",
+            "헤네시": "ヘネシー", "레미마틴": "レミーマルタン", "카뮤": "カミュ", "조세핀": "ジョセフィン",
             "사케": "日本酒", "와인": "ワイン", "닷사이": "獺祭", "쥬욘다이": "十四代", "돔페리뇽": "ドンペリニヨン"
         };
         
         async function searchCustom() {
             let input = document.getElementById('koreanKeyword').value.trim();
+            let status = document.getElementById('statusMsg');
+            
             if (!input) { alert("검색어를 입력하세요."); return; }
             
+            // 사용자가 띄어쓰기를 했더라도 빈칸을 모두 지우고 사전을 우선 검색합니다.
+            let normalizedInput = input.replace(/\s+/g, '');
             let jpKeyword = input;
             
-            if (dic[input]) {
-                jpKeyword = dic[input];
-                openYahoo(jpKeyword);
+            if (dic[normalizedInput]) {
+                jpKeyword = dic[normalizedInput];
+                status.style.color = "#0066cc";
+                status.innerText = `✅ 내장 사전 작동: [${jpKeyword}] (으)로 검색합니다.`;
+                setTimeout(() => openYahoo(jpKeyword), 400); // 사용자가 글씨를 읽을 수 있게 0.4초 딜레이
             } else {
+                status.style.color = "#ff8c00";
+                status.innerText = "⏳ 구글 번역 서버와 통신 중...";
                 try {
                     const response = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=ja&dt=t&q=${encodeURIComponent(input)}`);
                     const data = await response.json();
                     jpKeyword = data[0][0][0]; 
-                    openYahoo(jpKeyword);
+                    
+                    // 구글 번역기가 일본어가 아닌 영어 알파벳으로 번역했을 경우 경고 표시
+                    if (/^[a-zA-Z0-9\s]+$/.test(jpKeyword)) {
+                        status.style.color = "red";
+                        status.innerText = `⚠️ 구글이 영문 [${jpKeyword}](으)로 번역했습니다. 매물이 없을 수 있습니다.`;
+                    } else {
+                        status.style.color = "#008000";
+                        status.innerText = `✅ 구글 번역 성공: [${jpKeyword}] (으)로 검색합니다.`;
+                    }
+                    setTimeout(() => openYahoo(jpKeyword), 600);
+                    
                 } catch (error) {
-                    alert("인터넷 연결 불안정으로 번역에 실패했습니다.");
-                    openYahoo(input); 
+                    status.style.color = "red";
+                    status.innerText = "❌ 브라우저 보안 및 광고차단 앱이 번역을 막았습니다. 한글 그대로 검색합니다.";
+                    setTimeout(() => openYahoo(input), 1500);
                 }
             }
         }
