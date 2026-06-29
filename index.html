@@ -13,7 +13,6 @@
         button { padding: 8px 12px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; font-weight: bold; }
         .search-btn { background-color: #ffe600; }
         .price-btn { background-color: #e0e0e0; }
-        .add-btn { background-color: #4CAF50; color: white; border: none; }
         input[type="text"], input[type="number"], select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; max-width: 150px; }
         .calc-row { margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap;}
         .calc-row label { display: inline-block; width: 140px; }
@@ -83,18 +82,9 @@
         <button class="search-btn" onclick="searchCustom()" style="margin-top:5px;">번역 후 야후 검색</button>
         <div id="statusMsg"></div>
     </div>
-    
-    <div class="container">
-        <h2>4. 나만의 단어 사전 수동 추가</h2>
-        <div class="item-row">
-            <input type="text" id="newKo" placeholder="한글 (예: 조세핀)">
-            <input type="text" id="newJa" placeholder="일본어 (예: ジョセフィン)">
-            <button class="add-btn" onclick="addCustomWord()">저장하기</button>
-        </div>
-    </div>
 
     <div class="container">
-        <h2>5. 예상 총비용 계산기 (주류 기준)</h2>
+        <h2>4. 예상 총비용 계산기 (주류 기준)</h2>
         <div class="calc-row">
             <label>낙찰 예상가 (엔):</label>
             <input type="number" id="bidPrice" value="10000"> 엔
@@ -118,6 +108,7 @@
         </div>
         <button class="search-btn" onclick="calculateTotal()" style="margin-top:10px;">총 예상비용 계산</button>
         <div id="totalResult">총 예상 비용: </div>
+        <p style="font-size: 0.85em; color: #666; margin-top: 10px;">※ 주류 2리터 이하, 150달러 이하 면세 한도 초과 시를 가정한 대략적인 세금입니다.</p>
     </div>
 
     <script>
@@ -136,7 +127,8 @@
             window.open(url, '_blank');
         }
         
-        const baseDic = {
+        // 내장 사전
+        const dic = {
             "야마자키": "山崎", "히비키": "響", "하쿠슈": "白州", "요이치": "余市", "미야기쿄": "宮城峡", "타케츠루": "竹鶴", "이치로즈몰트": "イチローズモルト",
             "맥캘란": "マッカラン", "글렌피딕": "グレンフィディック", "글렌리벳": "グレンリベット", "글렌모렌지": "グレンモーレンジ", "글렌드로나흐": "グレンドロナック", "글렌파클라스": "グレンファークラス", "발베니": "バルベニー", "달모어": "ダルモア", "클라이넬리쉬": "クライヌリッシュ", "오반": "オーバン", "벤리악": "ベンリアック", "아벨라워": "アベラワー", "크라간모어": "クラガンモア",
             "아드벡": "アードベッグ", "라프로익": "ラフロイグ", "보모어": "ボウモア", "라가불린": "ラガヴーリン", "쿨릴라": "カリラ", "브룩라디": "ブルックラディ", "부나하벤": "ブナハーブン", "킬호만": "キルホーマン", "탈리스커": "タリスカー", "하이랜드파크": "ハイランドパーク", "아란": "アラン", "스프링뱅크": "スプリングバンク", "롱로우": "ロングロウ", "헤이즐번": "ヘーゼルバーン",
@@ -146,26 +138,6 @@
             "헤네시": "ヘネシー", "레미마틴": "レミーマルタン", "카뮤": "カミュ", "조세핀": "ジョセフィン",
             "사케": "日本酒", "와인": "ワイン", "닷사이": "獺祭", "쥬욘다이": "十四代", "돔페리뇽": "ドンペリニヨン"
         };
-
-        function getFullDic() {
-            let savedDic = JSON.parse(localStorage.getItem('myCustomDic')) || {};
-            return { ...baseDic, ...savedDic };
-        }
-
-        function addCustomWord() {
-            let ko = document.getElementById('newKo').value.trim();
-            let ja = document.getElementById('newJa').value.trim();
-            if (!ko || !ja) {
-                alert("한글과 일본어를 모두 입력하십시오.");
-                return;
-            }
-            let savedDic = JSON.parse(localStorage.getItem('myCustomDic')) || {};
-            savedDic[ko] = ja;
-            localStorage.setItem('myCustomDic', JSON.stringify(savedDic));
-            alert(`[${ko}] -> [${ja}] 사전에 저장되었습니다.`);
-            document.getElementById('newKo').value = '';
-            document.getElementById('newJa').value = '';
-        }
         
         async function searchCustom() {
             let input = document.getElementById('koreanKeyword').value.trim();
@@ -175,10 +147,9 @@
             
             let normalizedInput = input.replace(/\s+/g, '');
             let jpKeyword = input;
-            let currentDic = getFullDic();
             
-            if (currentDic[normalizedInput]) {
-                jpKeyword = currentDic[normalizedInput];
+            if (dic[normalizedInput]) {
+                jpKeyword = dic[normalizedInput];
                 status.style.color = "#0066cc";
                 status.innerText = `✅ 내장 사전 작동: [${jpKeyword}] (으)로 검색합니다.`;
                 setTimeout(() => openYahoo(jpKeyword), 400); 
@@ -190,8 +161,13 @@
                     const data = await response.json();
                     jpKeyword = data[0][0][0]; 
                     
-                    status.style.color = "#008000";
-                    status.innerText = `✅ 구글 번역 성공: [${jpKeyword}] (으)로 검색합니다.`;
+                    if (!/^[a-zA-Z0-9\s]+$/.test(jpKeyword)) {
+                        status.style.color = "#008000";
+                        status.innerText = `✅ 구글 번역 성공: [${jpKeyword}] (으)로 검색합니다.`;
+                    } else {
+                        status.style.color = "red";
+                        status.innerText = `⚠️ 구글이 영문 [${jpKeyword}](으)로 번역했습니다. 매물이 없을 수 있습니다.`;
+                    }
                     setTimeout(() => openYahoo(jpKeyword), 600);
                     
                 } catch (error) {
