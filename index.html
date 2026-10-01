@@ -14,10 +14,13 @@
         .search-btn { background-color: #ffe600; }
         .price-btn { background-color: #e0e0e0; }
         input[type="text"], input[type="number"], select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; max-width: 150px; }
-        .calc-row { margin-bottom: 10px; display: flex; align-items: center; flex-wrap: wrap;}
-        .calc-row label { display: inline-block; width: 140px; font-weight: 500;}
-        .radio-group label { width: auto; font-weight: normal; margin-right: 15px; cursor: pointer; }
-        #totalResult { font-size: 1.2em; color: #d32f2f; font-weight: bold; margin-top: 15px; }
+        
+        .calc-row { margin-bottom: 12px; display: flex; align-items: center; flex-wrap: wrap;}
+        .calc-row > label:first-child { display: inline-block; width: 140px; font-weight: bold; color: #444; }
+        .radio-group { display: flex; align-items: center; }
+        .radio-group label { width: auto; font-weight: normal; margin-right: 15px; cursor: pointer; color: #333; }
+        
+        #totalResult { font-size: 1.2em; color: #333; font-weight: bold; margin-top: 15px; line-height: 1.5; }
         #statusMsg { margin-top: 10px; font-size: 0.9em; font-weight: bold; min-height: 20px; }
     </style>
 </head>
@@ -86,38 +89,38 @@
 
     <div class="container">
         <h2>4. 예상 총비용 계산기 (주류 기준)</h2>
-        <div class="calc-row radio-group">
+        <div class="calc-row">
             <label>결제 화폐:</label>
-            <label><input type="radio" name="currency" value="JPY" checked onchange="changeCurrency()"> 엔화 (JPY)</label>
-            <label><input type="radio" name="currency" value="USD" onchange="changeCurrency()"> 달러 (USD)</label>
+            <div class="radio-group">
+                <label><input type="radio" name="currency" value="JPY" checked onchange="changeCurrency()"> 엔화 (JPY)</label>
+                <label><input type="radio" name="currency" value="USD" onchange="changeCurrency()"> 달러 (USD)</label>
+            </div>
         </div>
         <div class="calc-row">
-            <label>낙찰 예상가:</label>
+            <label>구입가:</label>
             <input type="number" id="bidPrice" value="10000"> <span id="bidUnit" style="margin-left: 5px;">엔</span>
         </div>
         <div class="calc-row">
             <label>현재 환율:</label>
-            <input type="number" id="exchangeRate" value="900"> <span id="rateUnit" style="margin-left: 5px;">원 (100엔당)</span>
+            <input type="number" id="exchangeRate" value="900" step="0.01"> <span id="rateUnit" style="margin-left: 5px;">원 (100엔당)</span>
+            <div id="rateStatus" style="font-size: 0.85em; color: #0066cc; margin-top: 5px; width: 100%; margin-left: 140px;">(실시간 환율 로딩 중...)</div>
         </div>
         <div class="calc-row">
             <label>현지+국제 배송:</label>
             <input type="number" id="shippingFee" value="3000"> <span id="shipUnit" style="margin-left: 5px;">엔</span>
         </div>
         <div class="calc-row">
-            <label>예상 세금 (관세 등):</label>
-            <select id="taxRate" style="max-width: 320px;">
-                <option value="whisky_full">위스키/꼬냑 ($150 초과) - 풀세금 약 155.6%</option>
-                <option value="whisky_exempt">위스키/꼬냑 ($150 이하) - 관/부가세 면제 약 93.6%</option>
-                <option value="sake_full">사케/와인 ($150 초과) - 풀세금 약 68.2%</option>
-                <option value="sake_exempt">사케/와인 ($150 이하) - 관/부가세 면제 약 33.0%</option>
-                <option value="soju_full">소주/고량주 ($150 초과) - 풀세금 약 177.0%</option>
-                <option value="soju_exempt">소주/고량주 ($150 이하) - 관/부가세 면제 약 93.6%</option>
+            <label>주종 선택:</label>
+            <select id="liquorType" style="max-width: 320px; width: 100%;" onchange="calculateTotal()">
+                <option value="whisky">위스키 / 꼬냑</option>
+                <option value="sake">사케 / 와인</option>
+                <option value="soju">소주 / 고량주</option>
                 <option value="none">세금 전액 면제 (0%)</option>
             </select>
         </div>
-        <button class="search-btn" onclick="calculateTotal()" style="margin-top:10px;">총 예상비용 계산</button>
+        <button class="search-btn" onclick="calculateTotal()" style="margin-top:10px; width: 140px;">총 예상비용 계산</button>
         <div id="totalResult">총 예상 비용: </div>
-        <p style="font-size: 0.85em; color: #666; margin-top: 10px;">※ 150달러 이하 직구 시 관세 및 부가세가 면제되어 주세/교육세만 부과됩니다.</p>
+        <p style="font-size: 0.85em; color: #666; margin-top: 10px;">※ 구입가가 150달러 초과 시 전체 금액에 대해 세금이 부과되며, 150달러 이하 시 관세/부가세가 자동 면제됩니다.</p>
     </div>
 
     <script>
@@ -186,60 +189,114 @@
             }
         }
 
+        // --- 실시간 오픈 API 환율 연동 ---
+        let apiRates = { JPY_per_USD: 150, KRW_per_USD: 1350 };
+        
+        async function fetchRates() {
+            try {
+                let res = await fetch('https://open.er-api.com/v6/latest/USD');
+                let data = await res.json();
+                apiRates.JPY_per_USD = data.rates.JPY;
+                apiRates.KRW_per_USD = data.rates.KRW;
+                
+                document.getElementById('rateStatus').innerText = "✅ 오늘 기준 실시간 환율이 자동 적용되었습니다.";
+                document.getElementById('rateStatus').style.color = "#008000";
+                changeCurrency();
+            } catch (e) {
+                document.getElementById('rateStatus').innerText = "⚠️ 실시간 환율을 불러오지 못했습니다. 수동으로 입력해 주세요.";
+                document.getElementById('rateStatus').style.color = "red";
+            }
+        }
+        
+        // 페이지 열릴 때 환율 바로 불러오기
+        window.onload = fetchRates;
+
         function changeCurrency() {
             const curr = document.querySelector('input[name="currency"]:checked').value;
+            const bidInput = document.getElementById('bidPrice');
+            const rateInput = document.getElementById('exchangeRate');
+            const shipInput = document.getElementById('shippingFee');
+            
             if (curr === 'JPY') {
                 document.getElementById('bidUnit').innerText = '엔';
                 document.getElementById('rateUnit').innerText = '원 (100엔당)';
                 document.getElementById('shipUnit').innerText = '엔';
-                document.getElementById('bidPrice').value = 10000;
-                document.getElementById('exchangeRate').value = 900;
-                document.getElementById('shippingFee').value = 3000;
+                
+                // 100엔당 원화 환율 계산
+                const jpyKrwRate = (apiRates.KRW_per_USD / apiRates.JPY_per_USD) * 100;
+                rateInput.value = jpyKrwRate.toFixed(2);
+                
+                if (bidInput.value == 100) bidInput.value = 10000;
+                if (shipInput.value == 25) shipInput.value = 3000;
             } else {
                 document.getElementById('bidUnit').innerText = '달러';
                 document.getElementById('rateUnit').innerText = '원 (1달러당)';
                 document.getElementById('shipUnit').innerText = '달러';
-                document.getElementById('bidPrice').value = 100;
-                document.getElementById('exchangeRate').value = 1350;
-                document.getElementById('shippingFee').value = 25;
+                
+                rateInput.value = apiRates.KRW_per_USD.toFixed(2);
+                
+                if (bidInput.value == 10000) bidInput.value = 100;
+                if (shipInput.value == 3000) shipInput.value = 25;
             }
+            calculateTotal();
         }
         
         function calculateTotal() {
             const curr = document.querySelector('input[name="currency"]:checked').value;
             const bid = parseFloat(document.getElementById('bidPrice').value) || 0;
             let rateVal = parseFloat(document.getElementById('exchangeRate').value) || 0;
-            
-            // 엔화는 100엔당 환율이므로 100으로 나눔, 달러는 1달러당 환율 그대로 적용
-            const rate = curr === 'JPY' ? (rateVal / 100) : rateVal;
             const shipping = parseFloat(document.getElementById('shippingFee').value) || 0;
-            const taxType = document.getElementById('taxRate').value;
-
-            const totalForeign = bid + shipping;
-            const totalKrw = totalForeign * rate;
+            const liquorType = document.getElementById('liquorType').value;
             
-            // 품목별 과세 기준 (관세, 주세, 교육세, 부가세)
+            // 1. 구입가 150달러 초과/이하 자동 판별
+            let itemUsd = 0;
+            if (curr === 'JPY') {
+                itemUsd = bid / apiRates.JPY_per_USD;
+            } else {
+                itemUsd = bid;
+            }
+            const isOver150 = itemUsd > 150;
+            
+            // 2. 전체 예상 비용(원화) 환산
+            const rate = curr === 'JPY' ? (rateVal / 100) : rateVal;
+            const totalForeign = bid + shipping;
+            const totalKrw = totalForeign * rate; 
+            
+            // 3. 주종별 세금 자동 매칭 로직
             let duty = 0, liquor = 0, edu = 0, vat = 0;
             
-            if (taxType === 'whisky_full') { duty = 0.20; liquor = 0.72; edu = 0.30; vat = 0.10; }
-            else if (taxType === 'whisky_exempt') { duty = 0; liquor = 0.72; edu = 0.30; vat = 0; }
-            else if (taxType === 'sake_full') { duty = 0.15; liquor = 0.30; edu = 0.10; vat = 0.10; }
-            else if (taxType === 'sake_exempt') { duty = 0; liquor = 0.30; edu = 0.10; vat = 0; }
-            else if (taxType === 'soju_full') { duty = 0.30; liquor = 0.72; edu = 0.30; vat = 0.10; }
-            else if (taxType === 'soju_exempt') { duty = 0; liquor = 0.72; edu = 0.30; vat = 0; }
+            if (liquorType === 'whisky') { duty = 0.20; liquor = 0.72; edu = 0.30; vat = 0.10; }
+            else if (liquorType === 'sake') { duty = 0.15; liquor = 0.30; edu = 0.10; vat = 0.10; }
+            else if (liquorType === 'soju') { duty = 0.30; liquor = 0.72; edu = 0.30; vat = 0.10; }
             
-            // 단계별 세금 누진 계산 (주세는 물품가+관세를 기준으로 책정되는 등 복합 적용)
+            // 150달러 이하 소액 면세 혜택 적용
+            if (!isOver150 && liquorType !== 'none') {
+                duty = 0; // 관세 면제
+                vat = 0;  // 부가세 면제
+            }
+            if (liquorType === 'none') {
+                duty = 0; liquor = 0; edu = 0; vat = 0;
+            }
+            
+            // 한국 세관 복합 누진세율 연산 공식
             const customsTax = totalKrw * duty;
-            const liquorTax = (totalKrw + customsTax) * liquor;
+            const liquorTax = (totalKrw + customsTax) * liquor; 
             const eduTax = liquorTax * edu;
             const vatTax = (totalKrw + customsTax + liquorTax + eduTax) * vat;
             
             const totalTaxAmountKrw = customsTax + liquorTax + eduTax + vatTax;
             const finalKrw = totalKrw + totalTaxAmountKrw;
             
-            document.getElementById('totalResult').innerText = 
-                `총 예상 비용: 약 ${Math.round(finalKrw).toLocaleString()} 원 ` + 
-                `(상품+배송: ${Math.round(totalKrw).toLocaleString()}원 / 세금: ${Math.round(totalTaxAmountKrw).toLocaleString()}원)`;
+            // 4. 화면 출력 메시지
+            let taxMsg = isOver150 ? 
+                `<span style="color:#d32f2f; font-weight:bold;">[150달러 초과 - 풀세금 적용됨]</span>` : 
+                `<span style="color:#008000; font-weight:bold;">[150달러 이하 - 관/부가세 면제 적용됨]</span>`;
+            if (liquorType === 'none') taxMsg = `<span style="color:#008000; font-weight:bold;">[세금 전액 면제]</span>`;
+            
+            document.getElementById('totalResult').innerHTML = 
+                `총 예상 비용: <span style="color:#d32f2f;">약 ${Math.round(finalKrw).toLocaleString()} 원</span><br>` + 
+                `<span style="font-size: 0.9em; margin-top: 5px; display: block;">${taxMsg}</span>` +
+                `<span style="font-size: 0.85em; color: #555;">(상품+배송: ${Math.round(totalKrw).toLocaleString()}원 / 세금: ${Math.round(totalTaxAmountKrw).toLocaleString()}원)</span>`;
         }
     </script>
 </body>
