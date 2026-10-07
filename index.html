@@ -61,7 +61,23 @@
     </div>
 
     <div class="container">
-        <h2>2. 인기 주류 판매자 바로가기</h2>
+        <h2>2. 최고급 와인 전용 검색 (스크롤 선택)</h2>
+        <div class="calc-row">
+            <select id="wineSelect" style="max-width: 350px; width: 100%; padding: 8px;">
+                <option value="シャトー ラフィット ロチルド">샤토 라피트 로칠드</option>
+                <option value="シャトー ラトゥール">샤토 라투르</option>
+                <option value="シャトー マルゴー">샤토 마고</option>
+                <option value="シャトー オー ブリオン">샤토 오 브리옹</option>
+                <option value="シャトー ムートン ロチルド">샤토 무통 로칠드</option>
+                <option value="ドメーヌ コシュ デュリ ムルソー">도멘 코쉬 뒤리 뫼르소 (화이트의 왕)</option>
+            </select>
+            <button class="search-btn" onclick="searchSelectedWine()" style="margin-left: 10px;">옥션 검색</button>
+            <button class="price-btn" onclick="searchSelectedWineClosed()" style="margin-left: 5px;">시세 조회</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>3. 인기 주류 판매자 바로가기</h2>
         <div class="item-row">
             <span class="item-name">가스</span>
             <button class="search-btn" onclick="window.open('https://auctions.yahoo.co.jp/seller/2QBqrSWBpztNbueEsP84NqeJwQPyb', '_blank')">판매자 보기</button>
@@ -81,14 +97,14 @@
     </div>
 
     <div class="container">
-        <h2>3. 자동 번역 검색</h2>
+        <h2>4. 자동 번역 검색</h2>
         <input type="text" id="koreanKeyword" placeholder="아무 한글이나 입력하세요">
         <button class="search-btn" onclick="searchCustom()" style="margin-top:5px;">번역 후 야후 검색</button>
         <div id="statusMsg"></div>
     </div>
 
     <div class="container">
-        <h2>4. 예상 총비용 계산기 (주류 기준)</h2>
+        <h2>5. 예상 총비용 계산기 (주류 기준)</h2>
         <div class="calc-row">
             <label>결제 화폐:</label>
             <div class="radio-group">
@@ -137,6 +153,16 @@
         function openClosedYahoo(keyword) {
             const url = `https://auctions.yahoo.co.jp/closedsearch/closedsearch?p=${encodeURIComponent(keyword)}&auccat=2084006720`;
             window.open(url, '_blank');
+        }
+        
+        function searchSelectedWine() {
+            const keyword = document.getElementById('wineSelect').value;
+            openYahoo(keyword);
+        }
+        
+        function searchSelectedWineClosed() {
+            const keyword = document.getElementById('wineSelect').value;
+            openClosedYahoo(keyword);
         }
         
         const dic = {
@@ -222,7 +248,6 @@
                 document.getElementById('rateUnit').innerText = '원 (100엔당)';
                 document.getElementById('shipUnit').innerText = '엔';
                 
-                // 100엔당 원화 환율 계산
                 const jpyKrwRate = (apiRates.KRW_per_USD / apiRates.JPY_per_USD) * 100;
                 rateInput.value = jpyKrwRate.toFixed(2);
                 
@@ -248,7 +273,6 @@
             const shipping = parseFloat(document.getElementById('shippingFee').value) || 0;
             const liquorType = document.getElementById('liquorType').value;
             
-            // 1. 구입가 150달러 초과/이하 자동 판별
             let itemUsd = 0;
             if (curr === 'JPY') {
                 itemUsd = bid / apiRates.JPY_per_USD;
@@ -257,28 +281,24 @@
             }
             const isOver150 = itemUsd > 150;
             
-            // 2. 전체 예상 비용(원화) 환산
             const rate = curr === 'JPY' ? (rateVal / 100) : rateVal;
             const totalForeign = bid + shipping;
             const totalKrw = totalForeign * rate; 
             
-            // 3. 주종별 세금 자동 매칭 로직
             let duty = 0, liquor = 0, edu = 0, vat = 0;
             
             if (liquorType === 'whisky') { duty = 0.20; liquor = 0.72; edu = 0.30; vat = 0.10; }
             else if (liquorType === 'sake') { duty = 0.15; liquor = 0.30; edu = 0.10; vat = 0.10; }
             else if (liquorType === 'soju') { duty = 0.30; liquor = 0.72; edu = 0.30; vat = 0.10; }
             
-            // 150달러 이하 소액 면세 혜택 적용
             if (!isOver150 && liquorType !== 'none') {
-                duty = 0; // 관세 면제
-                vat = 0;  // 부가세 면제
+                duty = 0; 
+                vat = 0;  
             }
             if (liquorType === 'none') {
                 duty = 0; liquor = 0; edu = 0; vat = 0;
             }
             
-            // 한국 세관 복합 누진세율 연산 공식
             const customsTax = totalKrw * duty;
             const liquorTax = (totalKrw + customsTax) * liquor; 
             const eduTax = liquorTax * edu;
@@ -287,7 +307,6 @@
             const totalTaxAmountKrw = customsTax + liquorTax + eduTax + vatTax;
             const finalKrw = totalKrw + totalTaxAmountKrw;
             
-            // 4. 화면 출력 메시지
             let taxMsg = isOver150 ? 
                 `<span style="color:#d32f2f; font-weight:bold;">[150달러 초과 - 풀세금 적용됨]</span>` : 
                 `<span style="color:#008000; font-weight:bold;">[150달러 이하 - 관/부가세 면제 적용됨]</span>`;
