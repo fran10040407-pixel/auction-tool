@@ -104,7 +104,7 @@
     </div>
 
     <div class="container">
-        <h2>5. 예상 총비용 계산기 (주류 기준)</h2>
+        <h2>5. 주류 직구 예상 총비용 계산기</h2>
         <div class="calc-row">
             <label>결제 화폐:</label>
             <div class="radio-group">
@@ -125,18 +125,31 @@
             <label>현지+국제 배송:</label>
             <input type="number" id="shippingFee" value="3000"> <span id="shipUnit" style="margin-left: 5px;">엔</span>
         </div>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+        
+        <div class="calc-row">
+            <label>총 용량 (리터):</label>
+            <input type="number" id="volumeL" value="0.7" step="0.1" style="max-width: 80px;"> <span style="margin-left: 5px;">L</span>
+        </div>
+        <div class="calc-row">
+            <label>총 병수:</label>
+            <input type="number" id="bottleCount" value="1" style="max-width: 80px;"> <span style="margin-left: 5px;">병</span>
+        </div>
         <div class="calc-row">
             <label>주종 선택:</label>
-            <select id="liquorType" style="max-width: 320px; width: 100%;" onchange="calculateTotal()">
-                <option value="whisky">위스키 / 꼬냑</option>
-                <option value="sake">사케 / 와인</option>
-                <option value="soju">소주 / 고량주</option>
+            <select id="liquorType" style="max-width: 320px; width: 100%;">
+                <option value="whisky">위스키 / 꼬냑 / 브랜디</option>
+                <option value="sake">사케 / 와인 / 청주</option>
+                <option value="soju">소주 / 고량주 / 보드카</option>
+                <option value="beer">맥주</option>
                 <option value="none">세금 전액 면제 (0%)</option>
             </select>
         </div>
+        
         <button class="search-btn" onclick="calculateTotal()" style="margin-top:10px; width: 140px;">총 예상비용 계산</button>
         <div id="totalResult">총 예상 비용: </div>
-        <p style="font-size: 0.85em; color: #666; margin-top: 10px;">※ 구입가가 150달러 초과 시 전체 금액에 대해 세금이 부과되며, 150달러 이하 시 관세/부가세가 자동 면제됩니다.</p>
+        <p style="font-size: 0.85em; color: #666; margin-top: 10px;">※ 해외직구 면세 기준: 미화 150달러 이하, 1리터 이하, 1병 이하 조건을 모두 충족할 때 관세와 부가세가 면제됩니다.</p>
     </div>
 
     <script>
@@ -215,7 +228,6 @@
             }
         }
 
-        // --- 실시간 오픈 API 환율 연동 ---
         let apiRates = { JPY_per_USD: 150, KRW_per_USD: 1350 };
         
         async function fetchRates() {
@@ -234,7 +246,6 @@
             }
         }
         
-        // 페이지 열릴 때 환율 바로 불러오기
         window.onload = fetchRates;
 
         function changeCurrency() {
@@ -263,7 +274,6 @@
                 if (bidInput.value == 10000) bidInput.value = 100;
                 if (shipInput.value == 3000) shipInput.value = 25;
             }
-            calculateTotal();
         }
         
         function calculateTotal() {
@@ -271,45 +281,62 @@
             const bid = parseFloat(document.getElementById('bidPrice').value) || 0;
             let rateVal = parseFloat(document.getElementById('exchangeRate').value) || 0;
             const shipping = parseFloat(document.getElementById('shippingFee').value) || 0;
+            
+            const volumeL = parseFloat(document.getElementById('volumeL').value) || 0;
+            const bottleCount = parseInt(document.getElementById('bottleCount').value) || 1;
             const liquorType = document.getElementById('liquorType').value;
             
-            let itemUsd = 0;
-            if (curr === 'JPY') {
-                itemUsd = bid / apiRates.JPY_per_USD;
-            } else {
-                itemUsd = bid;
-            }
-            const isOver150 = itemUsd > 150;
+            // 1. 구입가 달러 환산 및 면세 조건 검사 (150달러 이하 && 1L 이하 && 1병 이하)
+            let itemUsd = curr === 'JPY' ? bid / apiRates.JPY_per_USD : bid;
+            const isDutyFree = (itemUsd <= 150) && (volumeL <= 1.0) && (bottleCount === 1);
             
             const rate = curr === 'JPY' ? (rateVal / 100) : rateVal;
             const totalForeign = bid + shipping;
             const totalKrw = totalForeign * rate; 
             
-            let duty = 0, liquor = 0, edu = 0, vat = 0;
+            // 2. 주종별 세금 비율 할당
+            let dutyRate = 0, liquorRate = 0, eduRate = 0, vatRate = 0.10;
+            let isBeer = false;
             
-            if (liquorType === 'whisky') { duty = 0.20; liquor = 0.72; edu = 0.30; vat = 0.10; }
-            else if (liquorType === 'sake') { duty = 0.15; liquor = 0.30; edu = 0.10; vat = 0.10; }
-            else if (liquorType === 'soju') { duty = 0.30; liquor = 0.72; edu = 0.30; vat = 0.10; }
+            if (liquorType === 'whisky') { dutyRate = 0.20; liquorRate = 0.72; eduRate = 0.30; }
+            else if (liquorType === 'sake') { dutyRate = 0.15; liquorRate = 0.30; eduRate = 0.10; }
+            else if (liquorType === 'soju') { dutyRate = 0.30; liquorRate = 0.72; eduRate = 0.30; }
+            else if (liquorType === 'beer') { dutyRate = 0.30; isBeer = true; } // 맥주는 종량세 적용
             
-            if (!isOver150 && liquorType !== 'none') {
-                duty = 0; 
-                vat = 0;  
+            // 직구 소액 면세 적용 시 관세 및 부가세 0% 처리
+            if (isDutyFree && liquorType !== 'none') {
+                dutyRate = 0; 
+                vatRate = 0;  
             }
             if (liquorType === 'none') {
-                duty = 0; liquor = 0; edu = 0; vat = 0;
+                dutyRate = 0; liquorRate = 0; eduRate = 0; vatRate = 0;
             }
             
-            const customsTax = totalKrw * duty;
-            const liquorTax = (totalKrw + customsTax) * liquor; 
-            const eduTax = liquorTax * edu;
-            const vatTax = (totalKrw + customsTax + liquorTax + eduTax) * vat;
+            // 3. 한국 세관 누진세율 연산
+            let customsTax = totalKrw * dutyRate;
+            let liquorTax = 0;
+            let eduTax = 0;
+            
+            if (liquorType !== 'none') {
+                if (isBeer) {
+                    liquorTax = volumeL * 885.7; // 맥주는 리터당 885.7원 적용
+                    eduTax = liquorTax * 0.30;
+                } else {
+                    liquorTax = (totalKrw + customsTax) * liquorRate; 
+                    eduTax = liquorTax * eduRate;
+                }
+            }
+            
+            let vatTax = (totalKrw + customsTax + liquorTax + eduTax) * vatRate;
             
             const totalTaxAmountKrw = customsTax + liquorTax + eduTax + vatTax;
             const finalKrw = totalKrw + totalTaxAmountKrw;
             
-            let taxMsg = isOver150 ? 
-                `<span style="color:#d32f2f; font-weight:bold;">[150달러 초과 - 풀세금 적용됨]</span>` : 
-                `<span style="color:#008000; font-weight:bold;">[150달러 이하 - 관/부가세 면제 적용됨]</span>`;
+            // 4. 화면 출력
+            let taxMsg = isDutyFree ? 
+                `<span style="color:#008000; font-weight:bold;">[소액 면세 적용 - 관세/부가세 면제]</span>` : 
+                `<span style="color:#d32f2f; font-weight:bold;">[면세 조건 초과 - 풀세금 부과됨]</span>`;
+            
             if (liquorType === 'none') taxMsg = `<span style="color:#008000; font-weight:bold;">[세금 전액 면제]</span>`;
             
             document.getElementById('totalResult').innerHTML = 
