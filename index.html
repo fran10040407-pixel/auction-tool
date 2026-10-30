@@ -116,10 +116,14 @@
             <label>총 구입가 (모든 병 합산):</label>
             <input type="number" id="bidPrice" value="10000"> <span id="bidUnit" style="margin-left: 5px;">엔</span>
         </div>
-        <div class="calc-row">
-            <label>현재 환율:</label>
-            <input type="number" id="exchangeRate" value="900" step="0.01"> <span id="rateUnit" style="margin-left: 5px;">원 (100엔당)</span>
-            <div id="rateStatus" style="font-size: 0.85em; color: #0066cc; margin-top: 5px; width: 100%; margin-left: 165px;">(실시간 환율 로딩 중...)</div>
+        <div class="calc-row" style="align-items: flex-start;">
+            <label style="margin-top: 8px;">현재 환율:</label>
+            <div style="display: flex; flex-direction: column;">
+                <div>
+                    <input type="number" id="exchangeRate" value="900" step="0.01"> <span id="rateUnit" style="margin-left: 5px;">원 (100엔당)</span>
+                </div>
+                <div id="rateStatus" style="font-size: 0.85em; color: #0066cc; margin-top: 5px;">(실시간 환율 로딩 중...)</div>
+            </div>
         </div>
         <div class="calc-row">
             <label>현지+국제 배송:</label>
@@ -182,7 +186,7 @@
         const dic = {
             "야마자키": "山崎", "히비키": "響", "하쿠슈": "白州", "요이치": "余市", "미야기쿄": "宮城峡", "타케츠루": "竹鶴", "이치로즈몰트": "イチローズモルト",
             "맥캘란": "マッカラン", "글렌피딕": "グレンフィディック", "글렌리벳": "グレンリベット", "글렌모렌지": "グレンモーレンジ", "글렌드로나흐": "グレンドロナック", "글렌파클라스": "グレンファークラス", "발베니": "バルベニー", "달모어": "ダルモア", "클라이넬리쉬": "クライヌリッシュ", "오반": "オーバン", "벤리악": "ベンリアック", "아벨라워": "アベラワー", "크라간모어": "クラガンモア",
-            "아드벡": "アードベッグ", "라프로익": "ラフロイグ", "보모어": "ボウモア", "라가불린": "ラガヴーリン", "쿨릴라": "カリラ", "브룩라디": "ブルックラディ", "부나하벤": "ブナハーブン", "킬호만": "キルホーマン", "탈리스커": "タリスカー", "하이랜드파크": "ハイランドパーク", "아란": "アラン", "스프링뱅크": "スプリングバンク", "롱로우": "ロングロウ", "헤이즐번": "ヘーゼルバーン",
+            "아드벡": "アードベッグ", "라프로익": "ラフロイグ", "보모어": "ボウ মোহ", "라가불린": "ラガヴーリン", "쿨릴라": "カリラ", "브룩라디": "ブルックラディ", "부나하벤": "ブナハーブン", "킬호만": "キルホーマン", "탈리스커": "タリスカー", "하이랜드파크": "ハイランドパーク", "아란": "アラン", "스프링뱅크": "スプリングバンク", "롱로우": "ロングロウ", "헤이즐번": "ヘーゼルバーン",
             "발렌타인": "バランタイン", "조니워커": "ジョニーウォーカー", "로얄살루트": "ロイヤルサルート", "시바스리갈": "シーバスリーガル", "올드파": "オールドパー", "듀어스": "デュワーズ", "커티삭": "カティサーク", "딤플": "ディンプル",
             "제임슨": "ジェムソン", "부쉬밀": "ブッシュミルズ", "레드브레스트": "レッドブレスト",
             "와일드터키": "ワイルドターキー", "버팔로트레이스": "バッファロートレース", "메이커스마크": "メーカーズマーク", "우드포드리저브": "ウッドフォードリザーブ", "잭다니엘": "ジャックダニエル",
@@ -301,8 +305,8 @@
             let isBeer = false;
             
             if (liquorType === 'whisky') { dutyRate = 0.20; liquorRate = 0.72; eduRate = 0.30; }
-            else if (liquorType === 'wine') { dutyRate = 0.15; liquorRate = 0.30; eduRate = 0.10; } // 와인 교육세 10%
-            else if (liquorType === 'sake') { dutyRate = 0.15; liquorRate = 0.30; eduRate = 0.00; } // 사케 교육세 0% 수정 완료
+            else if (liquorType === 'wine') { dutyRate = 0.15; liquorRate = 0.30; eduRate = 0.10; }
+            else if (liquorType === 'sake') { dutyRate = 0.15; liquorRate = 0.30; eduRate = 0.00; }
             else if (liquorType === 'soju') { dutyRate = 0.30; liquorRate = 0.72; eduRate = 0.30; }
             else if (liquorType === 'beer') { dutyRate = 0.30; isBeer = true; } 
             
@@ -320,7 +324,7 @@
             
             if (liquorType !== 'none') {
                 if (isBeer) {
-                    liquorTax = totalVolumeL * 885.7; // 맥주 종량세 계산
+                    liquorTax = totalVolumeL * 885.7; 
                     eduTax = liquorTax * 0.30;
                 } else {
                     liquorTax = (totalKrw + customsTax) * liquorRate; 
